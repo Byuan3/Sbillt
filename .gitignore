@@ -6,3 +6,4 @@
 .idea/Sbillt.iml
 .idea/vcs.xml
 .idea/workspace.xml
+*.pyc
