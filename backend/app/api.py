@@ -52,8 +52,15 @@ async def get_user_info(user_id: str) -> dict:
 
 @app.get("/user", tags=['user'])
 async def get_user_info_with_phone_or_name(name: Union[str, None] = None, phone: Union[str, None] = None) -> dict:
-    user_info = {'user_name': name,
-                 'user_phone': phone}
+    user_info = {'users': []}
+    docs = users_ref.stream()
+
+    for doc in docs:
+        doc_dict = doc.to_dict()
+
+        if (name and name.lower() in str(doc_dict['name']).lower()) or (phone and phone.lower() in str(doc_dict['phone']).lower()):
+            user_info['users'].append(doc_dict)
+
     return user_info
 
 
