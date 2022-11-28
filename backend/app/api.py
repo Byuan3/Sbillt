@@ -12,7 +12,9 @@ db = firestore.client()
 
 users_ref = db.collection('Users')
 transactions_ref = db.collection('Transactions')
-notifications_ref = db.collection('Notifications')
+
+current_user = None
+current_user_name = None
 
 app = FastAPI()
 
@@ -77,21 +79,6 @@ async def get_transaction(transaction_id: str) -> dict:
 
     return transaction_info
 
-
-@app.get("/notification/{notification_id}", tags=['notification'])
-async def get_notification(notification_id: str) -> dict:
-    doc_ref = notifications_ref.document(notification_id)
-    doc = doc_ref.get()
-
-    notification_info = {}
-    if doc.exists:
-        notification_info[notification_id] = doc.to_dict()
-    else:
-        notification_info[notification_id] = 'notification not found'
-
-    return notification_info
-
-
 # TODO
 @app.put("/split", tags=['split'])
 async def split_bill(amount: int, user: Union[list[str], None] = Query(default=None)) -> dict:
@@ -126,23 +113,27 @@ async def add_balance(email: str, amount: int) -> dict:
 
 @app.post("/user", tags=['user'])
 async def create_user(user: str, name: str) -> dict:
-    response = {'message': f'user {user} exist'}
+    global current_user
+    global current_user_name
+
     docs = users_ref.stream()
 
     for doc in docs:
         if doc.id == user:
-            return response
+            current_user = doc.to_dict['email']
+            current_user_name = doc.to_dict['name']
+            return {'message': f'user {user} exist'}
 
     users_ref.document(user).set({
         'name': name,
         'email': user,
         'balance': 0,
-        'notifications': [],
         'transactions': []
     })
 
-    response = {'message': f'user {user} created'}
-    return response
+    current_user = user
+    current_user_name = name
+    return {'message': f'user {user} created'}
 
 
 # TODO
@@ -155,15 +146,8 @@ async def request_money(amount: int, user: str) -> dict:
 
 # TODO
 @app.post("/transfer", tags=['transfer'])
-async def request_money(amount: int, user: str) -> dict:
+async def transfer_money(amount: int, user: str) -> dict:
     response = {"amount": amount,
                 "user": user}
     return response
 
-
-# TODO
-@app.post("/notification", tags=['notification'])
-async def send_notification(user: str) -> dict:
-    response = {"content": "notification_content",
-                "user": user}
-    return response
