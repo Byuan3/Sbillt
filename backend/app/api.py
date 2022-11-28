@@ -14,7 +14,6 @@ users_ref = db.collection('Users')
 transactions_ref = db.collection('Transactions')
 notifications_ref = db.collection('Notifications')
 
-
 app = FastAPI()
 
 app.add_middleware(
@@ -36,29 +35,30 @@ async def ping() -> dict:
     return {"pong": 200}
 
 
-@app.get("/user/{user_id}", tags=['user'])
-async def get_user_info(user_id: str) -> dict:
-    doc_ref = users_ref.document(user_id)
+@app.get("/user/{user}", tags=['user'])
+async def get_user_info(user: str) -> dict:
+    doc_ref = users_ref.document(user)
     doc = doc_ref.get()
 
     user_info = {}
     if doc.exists:
-        user_info[user_id] = doc.to_dict()
+        user_info[user] = doc.to_dict()
     else:
-        user_info[user_id] = 'user not found'
+        user_info[user] = 'user not found'
 
     return user_info
 
 
 @app.get("/user", tags=['user'])
-async def get_user_info_with_phone_or_name(name: Union[str, None] = None, phone: Union[str, None] = None) -> dict:
+async def get_user_info_with_email_or_name(name: Union[str, None] = None, email: Union[str, None] = None) -> dict:
     user_info = {'users': []}
     docs = users_ref.stream()
 
     for doc in docs:
         doc_dict = doc.to_dict()
 
-        if (name and name.lower() in str(doc_dict['name']).lower()) or (phone and phone.lower() in str(doc_dict['phone']).lower()):
+        if (name and name.lower() in str(doc_dict['name']).lower()) or (
+                email and email.lower() in str(doc.id).lower()):
             user_info['users'].append(doc_dict)
 
     return user_info
@@ -92,12 +92,7 @@ async def get_notification(notification_id: str) -> dict:
     return notification_info
 
 
-@app.put("/user", tags=['user'])
-async def create_user(user_id: str) -> dict:
-    response = {'message': f'{user_id} info update failed'}
-    return response
-
-
+# TODO
 @app.put("/split", tags=['split'])
 async def split_bill(amount: int, user: Union[list[str], None] = Query(default=None)) -> dict:
     response = {"amount": amount,
@@ -105,18 +100,52 @@ async def split_bill(amount: int, user: Union[list[str], None] = Query(default=N
     return response
 
 
+# TODO
 @app.put("/confirm/{transaction_id}", tags=['confirm'])
 async def confirm_transaction(transaction_id: str) -> dict:
     response = {"transaction_id": transaction_id}
     return response
 
 
+@app.put("/balance", tags=['balance'])
+async def add_balance(email: str, amount: int) -> dict:
+    transaction = db.transaction()
+    user_doc = users_ref.document(email)
+
+    @firestore.transactional
+    def update_balance(t, doc):
+        snapshot = doc.get(transaction=t)
+        t.update(doc, {
+            'balance': snapshot.get('balance') + amount
+        })
+
+    update_balance(transaction, user_doc)
+
+    return user_doc.get().to_dict()
+
+
 @app.post("/user", tags=['user'])
-async def create_user(user_id: str) -> dict:
-    response = {'message': f'{user_id} created failed'}
+async def create_user(user: str, name: str) -> dict:
+    response = {'message': f'user {user} exist'}
+    docs = users_ref.stream()
+
+    for doc in docs:
+        if doc.id == user:
+            return response
+
+    users_ref.document(user).set({
+        'name': name,
+        'email': user,
+        'balance': 0,
+        'notifications': [],
+        'transactions': []
+    })
+
+    response = {'message': f'user {user} created'}
     return response
 
 
+# TODO
 @app.post("/request", tags=['request'])
 async def request_money(amount: int, user: str) -> dict:
     response = {"amount": amount,
@@ -124,6 +153,7 @@ async def request_money(amount: int, user: str) -> dict:
     return response
 
 
+# TODO
 @app.post("/transfer", tags=['transfer'])
 async def request_money(amount: int, user: str) -> dict:
     response = {"amount": amount,
@@ -131,9 +161,9 @@ async def request_money(amount: int, user: str) -> dict:
     return response
 
 
+# TODO
 @app.post("/notification", tags=['notification'])
 async def send_notification(user: str) -> dict:
     response = {"content": "notification_content",
                 "user": user}
     return response
-
