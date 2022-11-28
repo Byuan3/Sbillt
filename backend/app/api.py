@@ -2,6 +2,18 @@ from fastapi import FastAPI, Query
 from typing import Union
 from fastapi.middleware.cors import CORSMiddleware
 
+from firebase_admin import credentials
+import firebase_admin
+from firebase_admin import firestore
+
+cred = credentials.Certificate("app/sbillt-firebase-adminsdk-zgwo5-3b73fbd1b6.json")
+firebase_admin.initialize_app(cred)
+db = firestore.client()
+
+users_ref = db.collection('Users')
+transactions_ref = db.collection('Transactions')
+notifications_ref = db.collection('Notifications')
+
 
 app = FastAPI()
 
@@ -26,7 +38,15 @@ async def ping() -> dict:
 
 @app.get("/user/{user_id}", tags=['user'])
 async def get_user_info(user_id: str) -> dict:
-    user_info = {'user_id': user_id}
+    doc_ref = users_ref.document(user_id)
+    doc = doc_ref.get()
+
+    user_info = {}
+    if doc.exists:
+        user_info[user_id] = doc.to_dict()
+    else:
+        user_info[user_id] = 'user not found'
+
     return user_info
 
 
@@ -39,14 +59,30 @@ async def get_user_info_with_phone_or_name(name: Union[str, None] = None, phone:
 
 @app.get("/transaction/{transaction_id}", tags=['transaction'])
 async def get_transaction(transaction_id: str) -> dict:
-    transaction_info = {'transaction_id': transaction_id}
+    doc_ref = transactions_ref.document(transaction_id)
+    doc = doc_ref.get()
+
+    transaction_info = {}
+    if doc.exists:
+        transaction_info[transaction_id] = doc.to_dict()
+    else:
+        transaction_info[transaction_id] = 'transaction not found'
+
     return transaction_info
 
 
 @app.get("/notification/{notification_id}", tags=['notification'])
 async def get_notification(notification_id: str) -> dict:
-    notification = {'notification_id': notification_id}
-    return notification
+    doc_ref = notifications_ref.document(notification_id)
+    doc = doc_ref.get()
+
+    notification_info = {}
+    if doc.exists:
+        notification_info[notification_id] = doc.to_dict()
+    else:
+        notification_info[notification_id] = 'notification not found'
+
+    return notification_info
 
 
 @app.put("/split", tags=['split'])
