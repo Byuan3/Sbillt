@@ -92,6 +92,12 @@ async def get_notification(notification_id: str) -> dict:
     return notification_info
 
 
+@app.put("/user", tags=['user'])
+async def create_user(user_id: str) -> dict:
+    response = {'message': f'{user_id} info update failed'}
+    return response
+
+
 @app.put("/split", tags=['split'])
 async def split_bill(amount: int, user: Union[list[str], None] = Query(default=None)) -> dict:
     response = {"amount": amount,
@@ -102,6 +108,12 @@ async def split_bill(amount: int, user: Union[list[str], None] = Query(default=N
 @app.put("/confirm/{transaction_id}", tags=['confirm'])
 async def confirm_transaction(transaction_id: str) -> dict:
     response = {"transaction_id": transaction_id}
+    return response
+
+
+@app.post("/user", tags=['user'])
+async def create_user(user_id: str) -> dict:
+    response = {'message': f'{user_id} created failed'}
     return response
 
 
