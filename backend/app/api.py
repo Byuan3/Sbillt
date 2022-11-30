@@ -1,3 +1,5 @@
+import datetime
+
 from fastapi import FastAPI, Query
 from typing import Union
 from fastapi.middleware.cors import CORSMiddleware
@@ -79,25 +81,55 @@ async def get_transaction(transaction_id: str) -> dict:
 
     return transaction_info
 
-# TODO
+
 @app.put("/split", tags=['split'])
-async def split_bill(amount: int, user: Union[list[str], None] = Query(default=None)) -> dict:
-    response = {"amount": amount,
-                "users": user}
-    return response
+async def split_bill(current: str, amount: float, target: Union[list[str], None] = Query(default=None)) -> dict:
+    average_amount = round(amount/len(target), 2)
+    for t in target:
+        await request_money(current, average_amount, t)
+
+    return {'message': f"User {current} split ${amount} with {len(target)} people."}
 
 
-# TODO
 @app.put("/confirm/{transaction_id}", tags=['confirm'])
-async def confirm_transaction(transaction_id: str) -> dict:
-    response = {"transaction_id": transaction_id}
-    return response
+async def confirm_transaction(current: str, transaction_id: str) -> dict:
+    transaction_ref = transactions_ref.document(transaction_id)
+    transaction = transaction_ref.get()
+
+    if transaction.exists:
+        transaction_dict = transaction.to_dict()
+        user1_ref = users_ref.document(transaction_dict['user1_id'])
+        user2_ref = users_ref.document(transaction_dict['user2_id'])
+        fb_transaction = db.transaction()
+
+        @firestore.transactional
+        def update_transaction(t, transaction_doc, user1_doc, user2_doc):
+            transaction_snapshot = transaction_doc.get(transaction=t)
+            user1_snapshot = user1_doc.get(transaction=t)
+            user2_snapshot = user2_doc.get(transaction=t)
+            if not transaction_snapshot.get('state') and user2_snapshot.get('user_id') == current:
+                t.update(transaction_doc, {
+                    'state': True
+                })
+                t.update(user1_doc, {
+                    'balance': user1_snapshot.get('balance') + transaction_snapshot.get('amount')
+                })
+                t.update(user2_doc, {
+                    'balance': user2_snapshot.get('balance') - transaction_snapshot.get('amount')
+                })
+                return True
+            else:
+                return False
+
+        if update_transaction(fb_transaction, transaction_ref, user1_ref, user2_ref):
+            return {'message': f"Transaction {transaction_id} confirmed."}
+    return {'message': f"Transaction {transaction_id} failed."}
 
 
 @app.put("/balance", tags=['balance'])
-async def add_balance(email: str, amount: int) -> dict:
+async def add_balance(current: str, amount: float) -> dict:
     transaction = db.transaction()
-    user_doc = users_ref.document(email)
+    user_doc = users_ref.document(current)
 
     @firestore.transactional
     def update_balance(t, doc):
@@ -113,41 +145,81 @@ async def add_balance(email: str, amount: int) -> dict:
 
 @app.post("/user", tags=['user'])
 async def create_user(user: str, name: str) -> dict:
-    global current_user
-    global current_user_name
-
     docs = users_ref.stream()
 
     for doc in docs:
         if doc.id == user:
-            current_user = doc.to_dict['email']
-            current_user_name = doc.to_dict['name']
             return {'message': f'user {user} exist'}
 
     users_ref.document(user).set({
         'name': name,
         'email': user,
         'balance': 0,
-        'transactions': []
+        'transactions': [],
+        'user_id': user
     })
 
-    current_user = user
-    current_user_name = name
     return {'message': f'user {user} created'}
 
 
-# TODO
 @app.post("/request", tags=['request'])
-async def request_money(amount: int, user: str) -> dict:
-    response = {"amount": amount,
-                "user": user}
-    return response
+async def request_money(current: str, amount: float, target: str) -> dict:
+    transaction = {
+        'transaction_id': '',
+        'user1_id': current,
+        'user2_id': target,
+        'amount': amount,
+        'type': 'Request',
+        'state': False,
+        'timestamp': datetime.datetime.now(),
+        'content': f'{current} request ${amount} from {target}. Please confirm this transaction.'
+    }
+
+    update_time, transaction_ref = transactions_ref.add(transaction)
+    transaction_ref.update({'transaction_id': transaction_ref.id})
+
+    user1_ref = users_ref.document(current)
+    user2_ref = users_ref.document(target)
+
+    user1_ref.update({'transaction': firestore.ArrayUnion([transaction_ref.id])})
+    user2_ref.update({'transaction': firestore.ArrayUnion([transaction_ref.id])})
+
+    return {'message': f"{transaction['type']} transaction {transaction_ref.id} created."}
 
 
-# TODO
 @app.post("/transfer", tags=['transfer'])
-async def transfer_money(amount: int, user: str) -> dict:
-    response = {"amount": amount,
-                "user": user}
-    return response
+async def transfer_money(current: str, amount: float, target: str) -> dict:
+    transaction = {
+        'transaction_id': '',
+        'user1_id': current,
+        'user2_id': target,
+        'amount': amount,
+        'type': 'Transfer',
+        'state': True,
+        'timestamp': datetime.datetime.now(),
+        'content': f'{current} transfer ${amount} to {target}.'
+    }
 
+    update_time, transaction_ref = transactions_ref.add(transaction)
+    user1_ref = users_ref.document(current)
+    user2_ref = users_ref.document(target)
+    user1_ref.update({'transaction': firestore.ArrayUnion([transaction_ref.id])})
+    user2_ref.update({'transaction': firestore.ArrayUnion([transaction_ref.id])})
+    transaction_ref.update({'transaction_id': transaction_ref.id})
+
+    fb_transaction = db.transaction()
+
+    @firestore.transactional
+    def update_balance(t, user1_doc, user2_doc):
+        user1_snapshot = user1_doc.get(transaction=t)
+        user2_snapshot = user2_doc.get(transaction=t)
+        t.update(user1_doc, {
+            'balance': user1_snapshot.get('balance') - amount
+        })
+        t.update(user2_doc, {
+            'balance': user2_snapshot.get('balance') + amount
+        })
+
+    update_balance(fb_transaction, user1_ref, user2_ref)
+
+    return {'message': f"{transaction['type']} transaction {transaction_ref.id} created."}
