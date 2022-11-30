@@ -83,10 +83,10 @@ async def get_transaction(transaction_id: str) -> dict:
 
 
 @app.put("/split", tags=['split'])
-async def split_bill(current: str, amount: float, target: Union[list[str], None] = Query(default=None)) -> dict:
+async def split_bill(current: str, amount: float, description: str, target: Union[list[str], None] = Query(default=None)) -> dict:
     average_amount = round(amount/len(target), 2)
     for t in target:
-        await request_money(current, average_amount, t)
+        await request_money(current, average_amount, t, description)
 
     return {'message': f"User {current} split ${amount} with {len(target)} people."}
 
@@ -163,7 +163,7 @@ async def create_user(user: str, name: str) -> dict:
 
 
 @app.post("/request", tags=['request'])
-async def request_money(current: str, amount: float, target: str) -> dict:
+async def request_money(current: str, amount: float, target: str, description: str) -> dict:
     transaction = {
         'transaction_id': '',
         'user1_id': current,
@@ -171,6 +171,7 @@ async def request_money(current: str, amount: float, target: str) -> dict:
         'amount': amount,
         'type': 'Request',
         'state': False,
+        'description': description,
         'timestamp': datetime.datetime.now(),
         'content': f'{current} request ${amount} from {target}. Please confirm this transaction.'
     }
@@ -188,7 +189,7 @@ async def request_money(current: str, amount: float, target: str) -> dict:
 
 
 @app.post("/transfer", tags=['transfer'])
-async def transfer_money(current: str, amount: float, target: str) -> dict:
+async def transfer_money(current: str, amount: float, target: str, description: str) -> dict:
     transaction = {
         'transaction_id': '',
         'user1_id': current,
@@ -196,6 +197,7 @@ async def transfer_money(current: str, amount: float, target: str) -> dict:
         'amount': amount,
         'type': 'Transfer',
         'state': True,
+        'description': description,
         'timestamp': datetime.datetime.now(),
         'content': f'{current} transfer ${amount} to {target}.'
     }
