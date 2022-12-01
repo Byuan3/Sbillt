@@ -5,6 +5,7 @@ https://josephmiu.com/sbillt/
 ## Backend API usage
 API address: `http://54.177.245.182:8000`
 
+- - - -
 ### Default - /
 * GET: / 
 
@@ -16,7 +17,7 @@ Response:
 
 
 Example: `http://54.177.245.182:8000/`
-
+- - - -
 ### Ping - /ping
 * GET: /ping
 
@@ -27,7 +28,7 @@ Response:
     "pong": 200
 
 Example: `http://54.177.245.182:8000/ping`
-
+- - - -
 ### User - /user
 
 * GET: /user/{user}
@@ -61,6 +62,8 @@ Response:
     
 Example: `http://54.177.245.182:8000/user/test@gmail.com`
 
+- - - -
+
 * POST: /user
 
 Parameters: user, name
@@ -75,7 +78,7 @@ or
 
 Example: `http://54.177.245.182:8000/user?user=test5@gmail.com&name=Frank`
 
-
+- - - -
 ### Transaction - /transaction
 * GET: /transaction/{transaction_id}
 
@@ -96,7 +99,7 @@ Response:
     }
     
 Example: `http://54.177.245.182:8000/transaction/e0gdshV4NChCKiNoRVVh`
-
+- - - -
 ### Request - /request
 * Post: /request
 
@@ -107,7 +110,7 @@ Response:
     'message': f"{transaction['type']} transaction {transaction_ref.id} created."
     
 Example: `http://54.177.245.182:8000/request?current=test@gmail.com&amount=100&target=test1@gmail.com&description=Rent`
-
+- - - -
 ### Transfer - /transfer
 * Post: /transfer
 
@@ -118,7 +121,7 @@ Response:
     'message': f"{transaction['type']} transaction {transaction_ref.id} created."
     
 Example: `http://54.177.245.182:8000/transfer?current=test@gmail.com&amount=100&target=test1@gmail.com&description=Rent`
-
+- - - -
 ### Split -/split
 * Put: /split
 
@@ -130,7 +133,7 @@ Reponse:
    
    
 Example: `'http://54.177.245.182:8000/split?current=test@gmail.com&amount=20&target=test1@gmail.com&target=test2@gmail.com&description=Boba'`
-
+- - - -
 ### Confirm -/confirm
 * Put: /confirm/{transaction_id}
 
@@ -144,7 +147,7 @@ Reponse:
     'message': f"Transaction {transaction_id} failed."
     
 Example: `http://54.177.245.182:8000/confirm/dDNb1IA4UtL5Rw976IPP?current=test2@gmail.com`
-
+- - - -
 ### Balance - /balance
 * PUT: /balance
 
