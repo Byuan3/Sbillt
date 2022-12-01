@@ -23,7 +23,6 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=['*'],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
 )
@@ -84,7 +83,7 @@ async def get_transaction(transaction_id: str) -> dict:
 
 @app.put("/split", tags=['split'])
 async def split_bill(current: str, amount: float, description: str, target: Union[list[str], None] = Query(default=None)) -> dict:
-    average_amount = round(amount/len(target), 2)
+    average_amount = round(amount/(len(target)+1), 2)
     for t in target:
         await request_money(current, average_amount, t, description)
 
