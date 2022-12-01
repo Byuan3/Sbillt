@@ -46,7 +46,7 @@ async def get_user_info(user: str) -> dict:
 
     user_info = {}
     if doc.exists:
-        user_info[user] = doc.to_dict()
+        user_info = doc.to_dict()
     else:
         user_info[user] = 'user not found'
 
@@ -75,7 +75,7 @@ async def get_transaction(transaction_id: str) -> dict:
 
     transaction_info = {}
     if doc.exists:
-        transaction_info[transaction_id] = doc.to_dict()
+        transaction_info = doc.to_dict()
     else:
         transaction_info[transaction_id] = 'transaction not found'
 
@@ -155,7 +155,7 @@ async def create_user(user: str, name: str) -> dict:
         'name': name,
         'email': user,
         'balance': 0,
-        'transactions': [],
+        'transaction': [],
         'user_id': user
     })
 
