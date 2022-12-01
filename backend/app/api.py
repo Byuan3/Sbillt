@@ -83,9 +83,10 @@ async def get_transaction(transaction_id: str) -> dict:
 
 @app.put("/split", tags=['split'])
 async def split_bill(current: str, amount: float, description: str, target: Union[list[str], None] = Query(default=None)) -> dict:
-    average_amount = round(amount/(len(target)+1), 2)
+    average_amount = float("{:.2f}".format(amount/(len(target)+1)))
     for t in target:
-        await request_money(current, average_amount, t, description)
+        await split_pay(current, average_amount, t, description)
+    await split_pay(current, average_amount, current, description)
 
     return {'message': f"User {current} split ${amount} with {len(target)} people."}
 
@@ -110,12 +111,13 @@ async def confirm_transaction(current: str, transaction_id: str) -> dict:
                 t.update(transaction_doc, {
                     'state': True
                 })
-                t.update(user1_doc, {
-                    'balance': user1_snapshot.get('balance') + transaction_snapshot.get('amount')
-                })
                 t.update(user2_doc, {
                     'balance': user2_snapshot.get('balance') - transaction_snapshot.get('amount')
                 })
+                if transaction_snapshot.get('type') == 'Request':
+                    t.update(user1_doc, {
+                        'balance': user1_snapshot.get('balance') + transaction_snapshot.get('amount')
+                    })
                 return True
             else:
                 return False
@@ -159,6 +161,30 @@ async def create_user(user: str, name: str) -> dict:
     })
 
     return {'message': f'user {user} created'}
+
+
+@app.post("/split_pay", tags=['split_pay'])
+async def split_pay(current: str, amount: float, target: str, description: str) -> dict:
+    transaction = {
+        'transaction_id': '',
+        'user1_id': current,
+        'user2_id': target,
+        'amount': amount,
+        'type': 'Pay',
+        'state': False,
+        'description': description,
+        'timestamp': datetime.datetime.now(),
+        'content': f'{target} need to pay ${amount}. Please confirm this transaction.'
+    }
+
+    update_time, transaction_ref = transactions_ref.add(transaction)
+    transaction_ref.update({'transaction_id': transaction_ref.id})
+
+    user2_ref = users_ref.document(target)
+
+    user2_ref.update({'transaction': firestore.ArrayUnion([transaction_ref.id])})
+
+    return {'message': f"{transaction['type']} transaction {transaction_ref.id} created."}
 
 
 @app.post("/request", tags=['request'])
