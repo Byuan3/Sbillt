@@ -233,7 +233,6 @@ async def transfer_money(current: str, amount: float, target: str, description: 
     user1_ref = users_ref.document(current)
     user2_ref = users_ref.document(target)
     user1_ref.update({'transaction': firestore.ArrayUnion([transaction_ref.id])})
-    user2_ref.update({'transaction': firestore.ArrayUnion([transaction_ref.id])})
     transaction_ref.update({'transaction_id': transaction_ref.id})
 
     fb_transaction = db.transaction()
