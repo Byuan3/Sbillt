@@ -30,7 +30,7 @@ app.add_middleware(
 
 @app.get("/", tags=["root"])
 async def read_root() -> dict:
-    return {"message": "Hello World."}
+    return {"message": "Hello World Docker."}
 
 
 @app.get("/ping", tags=["ping"])
@@ -85,8 +85,8 @@ async def get_transaction(transaction_id: str) -> dict:
 async def split_bill(current: str, amount: float, description: str, target: Union[list[str], None] = Query(default=None)) -> dict:
     average_amount = float("{:.2f}".format(amount/(len(target)+1)))
     for t in target:
-        await split_pay(current, average_amount, t, description)
-    await split_pay(current, average_amount, current, description)
+        await split_pay(current, average_amount, t, description, False)
+    await split_pay(current, average_amount, current, description, True)
 
     return {'message': f"User {current} split ${amount} with {len(target)} people."}
 
@@ -164,14 +164,14 @@ async def create_user(user: str, name: str) -> dict:
 
 
 @app.post("/split_pay", tags=['split_pay'])
-async def split_pay(current: str, amount: float, target: str, description: str) -> dict:
+async def split_pay(current: str, amount: float, target: str, description: str, state: bool) -> dict:
     transaction = {
         'transaction_id': '',
         'user1_id': current,
         'user2_id': target,
         'amount': amount,
-        'type': 'Pay',
-        'state': False,
+        'type': 'Split',
+        'state': state,
         'description': description,
         'timestamp': datetime.datetime.now(),
         'content': f'{target} need to pay ${amount}. Please confirm this transaction.'
@@ -181,8 +181,10 @@ async def split_pay(current: str, amount: float, target: str, description: str) 
     transaction_ref.update({'transaction_id': transaction_ref.id})
 
     user2_ref = users_ref.document(target)
-
     user2_ref.update({'transaction': firestore.ArrayUnion([transaction_ref.id])})
+
+    if state:
+        await add_balance(current, -amount)
 
     return {'message': f"{transaction['type']} transaction {transaction_ref.id} created."}
 
