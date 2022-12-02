@@ -196,7 +196,7 @@ async def request_money(current: str, amount: float, target: str, description: s
         'user1_id': current,
         'user2_id': target,
         'amount': amount,
-        'type': 'Request',
+        'type': 'Requester',
         'state': False,
         'description': description,
         'timestamp': datetime.datetime.now(),
