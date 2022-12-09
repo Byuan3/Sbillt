@@ -1,9 +1,7 @@
 # Sbillt
 
-https://josephmiu.com/sbillt/
-
 ## Backend API usage
-API address: `http://54.177.245.182:8000`
+API docs address: `http://54.151.117.239:8000/docs#/`
 
 - - - -
 ### Default - /
