@@ -1,35 +1,35 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: sbillt-deployment
+  name: sbillt-deployment-1
   labels:
-    app: sbillt
+    app: sbillt-1
 spec:
-  replicas: 10
+  replicas: 1
   selector:
     matchLabels:
-      app: sbillt
+      app: sbillt-1
   template:
     metadata:
       labels:
-        app: sbillt
+        app: sbillt-1
     spec:
       containers:
-        - name: sbillt
+        - name: sbillt-1
           image: byuan333/sbillt
           ports:
-            - containerPort: 8000
+            - containerPort: 8001
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: sbillt-test-service
+  name: sbillt-test-service-1
 spec:
   selector:
-    app: sbillt
+    app: sbillt-1
   type: LoadBalancer
   ports:
     - protocol: TCP
-      port: 8000
-      targetPort: 8000
-      nodePort: 30000
+      port: 8001
+      targetPort: 8001
+      nodePort: 30002
