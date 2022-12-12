@@ -1,5 +1,16 @@
 # Sbillt
 
+## The front-end code is in the master branch
+[https://github.com/Byuan3/Sbillt/tree/master](https://github.com/Byuan3/Sbillt/tree/master)
+
+## Demo video
+[https://youtu.be/OAj219vcEaI](https://youtu.be/OAj219vcEaI)
+
+## Documentations
+**This shared folder includes the project report, presentation slides, and demo video.**
+
+[https://drive.google.com/drive/folders/14Ne9pSSriITmaiYySCwX6FwOP8sxwODI?usp=sharing](https://drive.google.com/drive/folders/14Ne9pSSriITmaiYySCwX6FwOP8sxwODI?usp=sharing)
+
 ## Backend API usage
 API docs address: `http://54.151.117.239:8000/docs#/`
 
