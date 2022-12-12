@@ -1,5 +1,7 @@
 # Front-end Code here
 
+The introduction page and user dashboard page are separate.
+
 ## Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
