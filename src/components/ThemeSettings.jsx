@@ -7,7 +7,12 @@ import { themeColors } from '../data/dummy';
 import { useStateContext } from '../contexts/ContextProvider';
 
 const ThemeSettings = () => {
-  const { setColor, setMode, currentMode, currentColor, setThemeSettings } = useStateContext();
+  const { setColor, currentColor, setThemeSettings, setUser} = useStateContext();
+
+  function LogoutEvent(){
+    setUser({});
+    window.location.href = "https://sbillt.josephmiu.com/";
+  }
 
   return (
     <div className="bg-half-transparent w-screen fixed nav-item top-0 right-0">
@@ -48,45 +53,10 @@ const ThemeSettings = () => {
           </div>
         </div>
 
-        <div className="flex-col border-t-1 border-color p-4 ml-4">
-          <p className="font-semibold text-xl ">Theme Option</p>
-
-          <div className="mt-4">
-            <input
-              type="radio"
-              id="light"
-              name="theme"
-              value="Light"
-              className="cursor-pointer"
-              onChange={setMode}
-              checked={currentMode === 'Light'}
-            />
-            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-            <label htmlFor="light" className="ml-2 text-md cursor-pointer">
-              Light Mode
-            </label>
-          </div>
-          <div className="mt-2">
-            <input
-              type="radio"
-              id="dark"
-              name="theme"
-              value="Dark"
-              onChange={setMode}
-              className="cursor-pointer"
-              checked={currentMode === 'Dark'}
-            />
-            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-            <label htmlFor="dark" className="ml-2 text-md cursor-pointer">
-              Dark Mode
-            </label>
-          </div>
-        </div>
-
         <div className="flex justify-between items-center p-4 ml-4">
-          <button
+          <button 
             type="button"
-            onClick={() => setThemeSettings(false)}
+            onClick={() => LogoutEvent()}
             style={{ color: currentColor }}
             className="text-xl p-3 hover:drop-shadow-xl hover:bg-light-gray"
           >

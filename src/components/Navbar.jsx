@@ -22,7 +22,7 @@ const NavButton = ({ title, customFunc, icon, color, dotColor }) => (
 );
 
 const Navbar = () => {
-  const { currentColor, activeMenu, setActiveMenu, setScreenSize, screenSize } = useStateContext();
+  const { currentColor, activeMenu, setActiveMenu, setScreenSize, screenSize, user } = useStateContext();
 
   useEffect(() => {
     const handleResize = () => setScreenSize(window.innerWidth);
@@ -52,9 +52,9 @@ const Navbar = () => {
           <div
             className="flex items-center gap-2 cursor-pointer p-1 hover:bg-light-gray rounded-lg">
             <p>
-              <span className="text-gray-400 text-14">Welcome back!,</span>{' '}
+              <span className="text-gray-400 text-14">Hi,</span>{' '}
               <span className="text-gray-400 font-bold ml-1 text-18">
-                Joseph
+                {user.name}
               </span>
             </p>
           </div>
